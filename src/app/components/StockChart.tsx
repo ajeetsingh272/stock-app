@@ -74,5 +74,10 @@ export default function StockChart({ symbol }: StockChartProps) {
   if (loading) return <div>Loading chart...</div>;
   if (!chartData) return <div>No chart data available</div>;
 
-  return (<Line data={chartData} />);
+  return (
+  <div style={{ maxWidth: 720, height: 360, margin: "0 auto 40px" }}>
+    <Line data={chartData} />
+  </div>
+);
+
 }

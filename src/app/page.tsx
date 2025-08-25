@@ -80,20 +80,26 @@ export default function Home() {
   }
 
   return (
-    <main style={{ padding: "20px" }}>
-      <h1>Stock Price Viewer</h1>
+     <main style={{
+    maxWidth: 900,
+    margin: "40px auto",
+    padding: 20,
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    color: "#222",
+  }}>
+    <h1 style={{ textAlign: "center", marginBottom: 35, fontWeight: "700" }}>Stock Price Viewer</h1>
 
-      <StockSelector selected={selectedStock} setSelected={setSelectedStock} />
+    <StockSelector selected={selectedStock} setSelected={setSelectedStock} />
 
-      <StockChart symbol={selectedStock} />
+    <StockChart symbol={selectedStock} />
 
-      <BuySellControls
-        currentPrice={currentPrice}
-        onBuy={buyStock}
-        onSell={sellStock}
-      />
+    <BuySellControls
+      currentPrice={currentPrice}
+      onBuy={buyStock}
+      onSell={sellStock}
+    />
 
-      <Portfolio portfolio={portfolio} />
-    </main>
+    <Portfolio portfolio={portfolio} />
+  </main>
   );
 }
