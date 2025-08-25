@@ -40,10 +40,12 @@ const StockSelector: React.FC<StockSelectorProps> = ({ selected, setSelected }) 
     }
   }
 
+  
   const selectedOption = stocks.find((stock) => stock.value === selected) || null;
 
   return (
     <div style={{ maxWidth: 300, margin: "0 auto 16px" }}>
+        
       <Select
         options={stocks}
         value={selectedOption}
@@ -57,6 +59,7 @@ const StockSelector: React.FC<StockSelectorProps> = ({ selected, setSelected }) 
           Price: {error ? error : price !== null ? `$${price.toFixed(2)}` : "Loading..."}
         </div>
       </div>
+      
     </div>
   );
 };

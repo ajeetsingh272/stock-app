@@ -23,6 +23,7 @@ ChartJS.register(
   Legend
 );
 
+
 interface StockChartProps {
   symbol: string;
 }
@@ -109,8 +110,10 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
   if (loading) return <div>Loading chart...</div>;
   if (error) return <div style={{ color: "red", textAlign: "center" }}>{error}</div>;
   if (!chartData) return <div>No chart data available</div>;
+  
 
   return (
+    
     <div style={{ width: "100%",
       minHeight: 400,
       maxWidth: 720,
@@ -122,6 +125,7 @@ const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
       alignItems: "center",
       justifyContent: "center",
       padding: 24, }}>
+        
       <Line data={chartData} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { ...chartOptions.plugins?.title, text: `${symbol} Stock Closing Prices (Last 30 Days)` } }}} />
     </div>
   );
