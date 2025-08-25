@@ -1,105 +1,100 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import StockSelector from "./components/StockSelector";
 import StockChart from "./components/StockChart";
 import BuySellControls from "./components/BuySellControls";
 import Portfolio from "./components/Portfolio";
-
-interface PortfolioItem {
-  symbol: string;
-  quantity: number;
-  avgPrice: number;
-}
+import { usePortfolio } from "./hooks/usePortfolio";
+import { useTradingWallet } from "./hooks/useTradingWallet";
 
 export default function Home() {
   const [selectedStock, setSelectedStock] = useState("AAPL");
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const { wallet, buyStocks, sellStocks } = useTradingWallet();
+  const { portfolio, buyStock, sellStock, currentPrice } = usePortfolio(selectedStock);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("portfolio");
-    if (saved) {
-      setPortfolio(JSON.parse(saved));
+  const handleBuy = (quantity: number) => {
+    if (!currentPrice) return;
+    const totalCost = currentPrice * quantity;
+    if (!buyStocks(totalCost)) {
+      alert("Not enough funds in wallet.");
+      return;
     }
-  }, []);
+    buyStock(quantity, currentPrice);
+  };
 
-  useEffect(() => {
-    localStorage.setItem("portfolio", JSON.stringify(portfolio));
-  }, [portfolio]);
-
-  useEffect(() => {
-    async function fetchPrice() {
-      const res = await fetch(`/api/alpha-candle?symbol=${selectedStock}`);
-      const data = await res.json();
-      const series = data["Time Series (Daily)"];
-      if (series) {
-        const latestDate = Object.keys(series)[0];
-        const price = Number(series[latestDate]["4. close"]);
-        setCurrentPrice(price);
-      } else {
-        setCurrentPrice(null);
-      }
-    }
-    fetchPrice();
-  }, [selectedStock]);
-
-  // Now handlers accept only quantity and use closure for symbol and price
-  function buyStock(quantity: number) {
-    if (quantity <= 0 || !currentPrice) return;
-    setPortfolio((prev) => {
-      const exists = prev.find((p) => p.symbol === selectedStock);
-      if (exists) {
-        const totalCost = exists.avgPrice * exists.quantity + currentPrice * quantity;
-        const totalQty = exists.quantity + quantity;
-        return prev.map((p) =>
-          p.symbol === selectedStock
-            ? { symbol: p.symbol, quantity: totalQty, avgPrice: totalCost / totalQty }
-            : p
-        );
-      } else {
-        return [...prev, { symbol: selectedStock, quantity, avgPrice: currentPrice }];
-      }
-    });
-  }
-
-  function sellStock(quantity: number) {
-    if (quantity <= 0) return;
-    setPortfolio((prev) => {
-      const exists = prev.find((p) => p.symbol === selectedStock);
-      if (!exists || exists.quantity < quantity) return prev;
-
-      const remainingQty = exists.quantity - quantity;
-      if (remainingQty === 0) {
-        return prev.filter((p) => p.symbol !== selectedStock);
-      } else {
-        return prev.map((p) =>
-          p.symbol === selectedStock ? { ...p, quantity: remainingQty } : p
-        );
-      }
-    });
-  }
+  const handleSell = (quantity: number) => {
+    if (!currentPrice) return;
+    const proceeds = currentPrice * quantity;
+    const success = sellStock(quantity);
+    if (success) sellStocks(proceeds);
+  };
 
   return (
-     <main style={{
-    maxWidth: 900,
-    margin: "40px auto",
-    padding: 20,
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    color: "#222",
-  }}>
-    <h1 style={{ textAlign: "center", marginBottom: 35, fontWeight: "700" }}>Stock Price Viewer</h1>
+    <main
+      style={{
+        maxWidth: 900,
+        margin: "40px auto",
+        padding: 24,
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#222",
+        backgroundColor: "#fff",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 32,
+      }}
+    >
+      {/* Header */}
+      <header
+        style={{
+          width: "100%",
+          maxWidth: 900,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+          borderBottom: "1px solid #e0e0e0",
+          paddingBottom: 12,
+        }}
+      >
+        <h1 style={{ fontWeight: "700", fontSize: 24, margin: 0 }}>Stock Price Viewer</h1>
+        <div style={{ fontWeight: 600, fontSize: 16 }}>
+          Wallet Balance: <span style={{ color: "#2d7be5" }}>${wallet.toFixed(2)}</span>
+        </div>
+      </header>
 
-    <StockSelector selected={selectedStock} setSelected={setSelectedStock} />
+      {/* Stock Selector */}
+      <StockSelector selected={selectedStock} setSelected={setSelectedStock} />
 
-    <StockChart symbol={selectedStock} />
+      {/* Chart and Controls */}
+      <section
+        style={{
+          width: "100%",
+          maxWidth: 720,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 16,
+        }}
+      >
+        <StockChart symbol={selectedStock} />
+        <BuySellControls currentPrice={currentPrice} onBuy={handleBuy} onSell={handleSell} />
+      </section>
 
-    <BuySellControls
-      currentPrice={currentPrice}
-      onBuy={buyStock}
-      onSell={sellStock}
-    />
-
-    <Portfolio portfolio={portfolio} />
-  </main>
+      {/* Portfolio Table */}
+      <section
+        style={{
+          width: "100%",
+          maxWidth: 720,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          borderRadius: 8,
+          padding: 20,
+          backgroundColor: "#f9fafb",
+        }}
+      >
+        <Portfolio portfolio={portfolio} />
+      </section>
+    </main>
   );
 }

@@ -1,62 +1,66 @@
 "use client";
-import React from "react";
-import { useState, useEffect } from "react";
-
+import React, { useState, useEffect, useCallback } from "react";
 
 const stocks = [
-  { symbol: "AAPL", name: "Apple" },
-  { symbol: "MSFT", name: "Microsoft" },
-  { symbol: "GOOGL", name: "Alphabet" },
+  { symbol: "AAPL", name: "Apple" },
+  { symbol: "MSFT", name: "Microsoft" },
+  { symbol: "GOOGL", name: "Alphabet" },
 ];
 
-
-  const API_KEY = "d2k27jpr01qj8a5lmog0d2k27jpr01qj8a5lmogg";
-
-
-
 interface StockSelectorProps {
-  selected: string;
-  setSelected: React.Dispatch<React.SetStateAction<string>>;
+  selected: string;
+  setSelected: React.Dispatch<React.SetStateAction<string>>;
 }
 
+const StockSelector: React.FC<StockSelectorProps> = ({ selected, setSelected }) => {
+  const [price, setPrice] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-export default function StockSelector({ selected, setSelected }: StockSelectorProps) {
-    // const [selected, setSelected] = useState("AAPL");
-  const [price, setPrice] = useState<number | null>(null);
+  const fetchPrice = useCallback(async () => {
+    setError(null);
+    try {
+      const res = await fetch(`/api/alpha-candle?symbol=${selected}`);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+      const series = data["Time Series (Daily)"];
+      if (series) {
+        const latestDate = Object.keys(series)[0];
+        const priceVal = Number(series[latestDate]["4. close"]);
+        setPrice(priceVal);
+      } else setPrice(null);
+    } catch (err) {
+      setError("Failed to fetch price");
+      setPrice(null);
+    }
+  }, [selected]);
 
+  useEffect(() => {
+    fetchPrice();
+  }, [fetchPrice]);
 
-  useEffect(() => {
-    async function fetchPrice() {
-      try {
-        const res = await fetch(
-          `https://finnhub.io/api/v1/quote?symbol=${selected}&token=${API_KEY}`
-        );
-        const data = await res.json();
-        // 'c' is the current price in Finnhub API response
-        setPrice(typeof data.c === "number" ? data.c : null);
-      } catch (error) {
-        console.error("Failed to fetch stock price", error);
-        setPrice(null);
-      }
-    }
+  return (
+    <div style={{ textAlign: "center", marginBottom: 12 }}>
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        style={{ fontSize: 18, padding: "5px 12px", marginRight: 10 }}
+      >
+        {stocks.map((stock) => (
+          <option key={stock.symbol} value={stock.symbol}>
+            {stock.name} ({stock.symbol})
+          </option>
+        ))}
+      </select>
+      <div>
+        <span style={{ fontWeight: 500 }}>
+          {stocks.find(s => s.symbol === selected)?.name} ({selected})
+        </span>
+      </div>
+      <div>
+        Price: {error ? error : price !== null ? `$${price.toFixed(2)}` : "Loading..."}
+      </div>
+    </div>
+  );
+};
 
-
-    fetchPrice();
-  }, [selected]);
-
-
-  return (
-    <div>
-      <select value={selected} onChange={(e) => setSelected(e.target.value)}>
-        {stocks.map((stock) => (
-          <option key={stock.symbol} value={stock.symbol}>
-            {stock.name} ({stock.symbol})
-          </option>
-        ))}
-      </select>
-      <h2>
-        Price: {typeof price === "number" ? `$${price.toFixed(2)}` : "Loading..."}
-      </h2>
-    </div>
-  );
-}
+export default StockSelector;

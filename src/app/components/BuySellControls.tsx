@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { buySellControlsStyles as styles } from "../styles/buySellControlsStyles";
 
 interface BuySellControlsProps {
   currentPrice: number | null;
@@ -7,132 +8,80 @@ interface BuySellControlsProps {
   onSell: (quantity: number) => void;
 }
 
-// export default function BuySellControls({
-//   currentPrice,
-//   onBuy,
-//   onSell,
-// }: BuySellControlsProps) {
-//   const [inputQuantity, setInputQuantity] = useState<number>(0);
-
-//   function handleBuy() {
-//     if (inputQuantity > 0) {
-//       onBuy(inputQuantity);
-//       setInputQuantity(0);
-//     }
-//   }
-
-//   function handleSell() {
-//     if (inputQuantity > 0) {
-//       onSell(inputQuantity);
-//       setInputQuantity(0);
-//     }
-//   }
-
-//   return (
-//      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-//     <input
-//       type="number"
-//       min={1}
-//       value={inputQuantity}
-//       placeholder={`Qty (Price: $${currentPrice?.toFixed(2) ?? "N/A"})`}
-//       onChange={(e) => setInputQuantity(Number(e.target.value))}
-//       style={{ width: 120, padding: 6, fontSize: "1em", borderRadius: 4, border: "1px solid #ccc"}}
-//     />
-//     <button
-//       onClick={handleBuy}
-//       style={{
-//         padding: "7px 18px", borderRadius: 4, background: "#2d7be5", color: "#fff", border: "none", cursor: "pointer"
-//       }}
-//     >
-//       Buy
-//     </button>
-//     <button
-//       onClick={handleSell}
-//       style={{
-//         padding: "7px 18px", borderRadius: 4, background: "#e53f2d", color: "#fff", border: "none", cursor: "pointer"
-//       }}
-//     >
-//       Sell
-//     </button>
-//   </div>
-//   );
-// }
-
-
-export default function BuySellControls({ currentPrice, onBuy, onSell }: BuySellControlsProps) {
+const BuySellControls: React.FC<BuySellControlsProps> = ({ currentPrice, onBuy, onSell }) => {
   const [inputQuantity, setInputQuantity] = useState<number>(0);
+  const [buyHover, setBuyHover] = useState(false);
+  const [sellHover, setSellHover] = useState(false);
 
-  function handleBuy() {
+  const handleBuy = useCallback(() => {
     if (inputQuantity > 0) {
       onBuy(inputQuantity);
       setInputQuantity(0);
     }
-  }
+  }, [inputQuantity, onBuy]);
 
-  function handleSell() {
+  const handleSell = useCallback(() => {
     if (inputQuantity > 0) {
       onSell(inputQuantity);
       setInputQuantity(0);
     }
-  }
+  }, [inputQuantity, onSell]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const num = Number(value);
+      if (value === "") {
+        setInputQuantity(0);
+      } else if (!isNaN(num) && num >= 0 && Number.isInteger(num)) {
+        setInputQuantity(num);
+      }
+    },
+    []
+  );
 
   return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 15,
-      justifyContent: "center",
-      marginTop: 20,
-    }}>
+    <div style={styles.container}>
       <input
         type="number"
         min={1}
-        value={inputQuantity}
+        value={inputQuantity > 0 ? inputQuantity : ""}
         placeholder={`Qty (Price: $${currentPrice?.toFixed(2) ?? "N/A"})`}
-        onChange={(e) => setInputQuantity(Number(e.target.value))}
-        style={{
-          width: 140,
-          padding: "8px 12px",
-          fontSize: 16,
-          borderRadius: 6,
-          border: "1px solid #ccc",
-          boxShadow: "inset 0 2px 5px #eee",
-        }}
+        onChange={handleInputChange}
+        style={styles.input}
       />
       <button
+        type="button"
         onClick={handleBuy}
         style={{
-          padding: "10px 24px",
-          borderRadius: 6,
-          background: "#2d7be5",
-          color: "#fff",
-          border: "none",
-          cursor: "pointer",
-          fontWeight: "bold",
-          transition: "background-color 0.3s",
+          ...styles.buttonBase,
+          ...styles.buyButton,
+          ...(buyHover ? styles.buyButtonHover : {}),
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1b5dab")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2d7be5")}
+        onMouseEnter={() => setBuyHover(true)}
+        onMouseLeave={() => setBuyHover(false)}
+        disabled={inputQuantity <= 0 || !currentPrice}
+        aria-disabled={inputQuantity <= 0 || !currentPrice}
       >
         Buy
       </button>
       <button
+        type="button"
         onClick={handleSell}
         style={{
-          padding: "10px 24px",
-          borderRadius: 6,
-          background: "#e53f2d",
-          color: "#fff",
-          border: "none",
-          cursor: "pointer",
-          fontWeight: "bold",
-          transition: "background-color 0.3s",
+          ...styles.buttonBase,
+          ...styles.sellButton,
+          ...(sellHover ? styles.sellButtonHover : {}),
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9f241b")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#e53f2d")}
+        onMouseEnter={() => setSellHover(true)}
+        onMouseLeave={() => setSellHover(false)}
+        disabled={inputQuantity <= 0 || !currentPrice}
+        aria-disabled={inputQuantity <= 0 || !currentPrice}
       >
         Sell
       </button>
     </div>
   );
-}
+};
+
+export default BuySellControls;
