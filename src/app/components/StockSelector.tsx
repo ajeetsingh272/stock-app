@@ -1,11 +1,7 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-
-const stocks = [
-  { symbol: "AAPL", name: "Apple" },
-  { symbol: "MSFT", name: "Microsoft" },
-  { symbol: "GOOGL", name: "Alphabet" },
-];
+import React, { useEffect, useState } from "react";
+import Select, { SingleValue } from "react-select";
+import { stocks } from "../data/stocks";
 
 interface StockSelectorProps {
   selected: string;
@@ -16,48 +12,50 @@ const StockSelector: React.FC<StockSelectorProps> = ({ selected, setSelected }) 
   const [price, setPrice] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPrice = useCallback(async () => {
-    setError(null);
-    try {
-      const res = await fetch(`/api/alpha-candle?symbol=${selected}`);
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const data = await res.json();
-      const series = data["Time Series (Daily)"];
-      if (series) {
-        const latestDate = Object.keys(series)[0];
-        const priceVal = Number(series[latestDate]["4. close"]);
-        setPrice(priceVal);
-      } else setPrice(null);
-    } catch (err) {
-      setError("Failed to fetch price");
-      setPrice(null);
+  useEffect(() => {
+    async function fetchPrice() {
+      setError(null);
+      try {
+        const res = await fetch(`/api/alpha-candle?symbol=${selected}`);
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        const data = await res.json();
+        const series = data["Time Series (Daily)"];
+        if (series) {
+          const latestDate = Object.keys(series)[0];
+          const priceVal = Number(series[latestDate]["4. close"]);
+          setPrice(priceVal);
+        } else setPrice(null);
+      } catch {
+        setError("Failed to fetch price");
+        setPrice(null);
+      }
     }
+    fetchPrice();
   }, [selected]);
 
-  useEffect(() => {
-    fetchPrice();
-  }, [fetchPrice]);
+  // Handle selection event from react-select
+  function handleChange(option: SingleValue<{ value: string; label: string }>) {
+    if (option) {
+      setSelected(option.value);
+    }
+  }
+
+  const selectedOption = stocks.find((stock) => stock.value === selected) || null;
 
   return (
-    <div style={{ textAlign: "center", marginBottom: 12 }}>
-      <select
-        value={selected}
-        onChange={(e) => setSelected(e.target.value)}
-        style={{ fontSize: 18, padding: "5px 12px", marginRight: 10 }}
-      >
-        {stocks.map((stock) => (
-          <option key={stock.symbol} value={stock.symbol}>
-            {stock.name} ({stock.symbol})
-          </option>
-        ))}
-      </select>
-      <div>
-        <span style={{ fontWeight: 500 }}>
-          {stocks.find(s => s.symbol === selected)?.name} ({selected})
-        </span>
-      </div>
-      <div>
-        Price: {error ? error : price !== null ? `$${price.toFixed(2)}` : "Loading..."}
+    <div style={{ maxWidth: 300, margin: "0 auto 16px" }}>
+      <Select
+        options={stocks}
+        value={selectedOption}
+        onChange={handleChange}
+        placeholder="Search and select stock..."
+        isClearable={false}
+      />
+      <div style={{ marginTop: 8, textAlign: "center" }}>
+        <div><strong>{selectedOption?.label}</strong></div>
+        <div>
+          Price: {error ? error : price !== null ? `$${price.toFixed(2)}` : "Loading..."}
+        </div>
       </div>
     </div>
   );
