@@ -22,6 +22,10 @@ export default function Home() {
     buyStock(quantity, currentPrice);
   };
 
+    if (wallet === null) {
+    return <div>Loading...</div>;
+  }
+
   const handleSell = (quantity: number) => {
     if (!currentPrice) return;
     const proceeds = currentPrice * quantity;

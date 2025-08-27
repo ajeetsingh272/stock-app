@@ -9,9 +9,9 @@ export const buySellControlsStyles: { [key: string]: CSSProperties } = {
     marginTop: 20,
   },
   input: {
-    width: 140,
-    padding: "8px 12px",
-    fontSize: 16,
+    width: 170,
+    padding: "9px 12px",
+    fontSize: 15,
     borderRadius: 6,
     border: "1px solid #ccc",
     boxShadow: "inset 0 2px 5px #eee",
@@ -26,13 +26,13 @@ export const buySellControlsStyles: { [key: string]: CSSProperties } = {
     transition: "background-color 0.3s",
   },
   buyButton: {
-    background: "#2d7be5",
+    backgroundColor: "#2d7be5",
   },
   buyButtonHover: {
     backgroundColor: "#1b5dab",
   },
   sellButton: {
-    background: "#e53f2d",
+    backgroundColor: "#e53f2d",
   },
   sellButtonHover: {
     backgroundColor: "#9f241b",
